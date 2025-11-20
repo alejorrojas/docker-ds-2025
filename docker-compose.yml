@@ -73,7 +73,7 @@ services:
       start_period: 10s
 
   back-logistica:
-    image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:6a21efb20739f3e42157129078624499cb3fdb89
+    image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:2ffdc6761b542617b0b4d7be43dfd43bef4ccce3
     container_name: shipping_back
     restart: always
     environment:
