@@ -1,0 +1,52 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: shipping_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: shipping_db
+      MYSQL_USER: shipping_user
+      MYSQL_PASSWORD: shipping_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "shipping_user", "-pshipping_pass"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - shared_net
+
+
+  back:
+    image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:f018f4e55f06b2c27aa1c1ff7e7e2fbc2c12fe11
+    container_name: shipping_back
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: shipping_user
+      DB_PASSWORD: shipping_pass
+      DB_DATABASE: shipping_db
+      KEYCLOAK_AUTH_SERVER_URL: http://host.docker.internal:8080
+      KEYCLOAK_REALM: ds-2025-realm
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3010:3000"
+    networks:
+      - shared_net
+
+volumes:
+  mysql_data:
+
+networks:
+  shared_net:
+    external: true
