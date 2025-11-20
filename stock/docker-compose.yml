@@ -22,7 +22,7 @@ services:
         - shared_net
 
   backend-stock:
-    image: ghcr.io/frre-ds/2025-grupo-11-backend-stock:8fed5e145d27af1007d3327de4cf77be1e10731c
+    image: ghcr.io/frre-ds/2025-grupo-11-backend-stock:f5ff36db6851a291c436acc38baae82805c39c67
     container_name: backend-stock
     environment:
       DB_HOST: postgres_main
