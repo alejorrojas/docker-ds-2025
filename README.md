@@ -6,6 +6,7 @@ Este proyecto contiene un stack completo de microservicios unificado en un solo 
 
 - [Arquitectura](#arquitectura)
 - [Uso](#uso)
+- [Pruebas con CURL](#Pruebas-con-CURL)
 - [Configuración Inicial](#configuración-inicial)
 - [Servicios](#servicios)
 - [Comunicación entre Servicios](#comunicación-entre-servicios)
@@ -54,60 +55,48 @@ El stack está compuesto por los siguientes servicios:
 docker compose up -d
 ```
 
-### Ver logs de un servicio específico
+## Pruebas con CURL
+
+Una vez que todos los servicios estén corriendo, puedes probar los endpoints con los siguientes comandos:
+
+#### Obtener Token de Keycloak
 
 ```bash
-docker compose logs -f keycloak
-docker compose logs -f backend-stock
-docker compose logs -f back-logistica
-docker compose logs -f backend-compras
+curl --location 'http://localhost:8080/realms/ds-2025-realm/protocol/openid-connect/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'grant_type=client_credentials' \
+--data-urlencode 'client_id=grupo-03' \
+--data-urlencode 'client_secret=21cd6616-6571-4ee7-be29-0f781f77c74e'
 ```
 
-### Detener todos los servicios
+Este comando retorna un JSON con el `access_token` que necesitarás para las siguientes peticiones.
+
+#### Obtener Productos de Stock (requiere token)
+
+Reemplaza `{token}` con el `access_token` obtenido del paso anterior:
 
 ```bash
-docker compose down
+curl --location 'http://localhost:3099/api/productos' \
+--header 'Authorization: Bearer {token}'
 ```
 
-### Detener y eliminar volúmenes (⚠️ elimina datos)
+#### Obtener Envíos de Logística (requiere token)
 
 ```bash
-docker compose down -v
+curl --location 'http://localhost:3010/shipping' \
+--header 'Authorization: Bearer {token}'
 ```
 
-### Ver estado de los servicios
+#### Obtener Métodos de Transporte (público, no requiere token)
+
+Este endpoint es público y no requiere autenticación:
 
 ```bash
-docker compose ps
+curl --location 'http://localhost:3010/shipping/transport-methods'
 ```
 
-## ⚙️ Configuración Inicial
+> **Nota**: Aunque el endpoint es público, puedes incluir el header de Authorization si lo deseas, pero no es necesario.
 
-### 1. Variables de Entorno
-
-El proyecto utiliza un archivo `.env` en la raíz del proyecto. Las variables necesarias para Keycloak están definidas en `keycloak/.env` y deben copiarse al `.env` principal:
-
-```bash
-# Keycloak PostgreSQL Database
-POSTGRES_DB=keycloak_db
-POSTGRES_USER=keycloak_db_user
-POSTGRES_PASSWORD=keycloak_db_user_password
-
-# Keycloak Admin
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=ds2025
-```
-
-### 2. Configuración de Keycloak
-
-Keycloak se configura automáticamente mediante el archivo de realm JSON ubicado en:
-- `keycloak/realm-config/ds-2025-realm.json`
-
-Este archivo contiene:
-- Realm `ds-2025-realm` completo
-- Todos los clientes (grupo-01 a grupo-13)
-- Client scopes personalizados
-- Roles del realm
 - Service accounts configurados
 
 ## 🔧 Servicios
@@ -206,7 +195,7 @@ DB_HOST: mysql-logistica
 ```
 
 ❌ **INCORRECTO**:
-```yaml
+  ```yaml
 KEYCLOAK_ISSUER: http://localhost:8080/realms/ds-2025-realm  # No funciona
 DB_HOST: localhost  # No funciona
 ```
@@ -284,8 +273,8 @@ Keycloak importa automáticamente el realm al iniciar usando:
 docker exec backend-stock ping -c 2 keycloak
 
 # Verificar que keycloak responde
-docker exec backend-stock wget -qO- http://keycloak:8080/realms/ds-2025-realm/.well-known/openid-configuration
-```
+  docker exec backend-stock wget -qO- http://keycloak:8080/realms/ds-2025-realm/.well-known/openid-configuration
+  ```
 
 ### Ver logs de Keycloak
 
