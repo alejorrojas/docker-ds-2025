@@ -56,23 +56,9 @@ services:
     image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:latest
     container_name: back-logistica
     restart: always
-    environment:
-      # Database (localhost porque MySQL está en el mismo contenedor)
-      DB_HOST: localhost
-      DB_PORT: 3306
-      DB_USERNAME: shipping_user
-      DB_PASSWORD: shipping_pass
-      DB_DATABASE: shipping_db
-      
-      # Server
-      HOST: 0.0.0.0
-      PORT: 3000
-      
-      # Keycloak
+    environment:     
       KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
       KEYCLOAK_REALM: ds-2025-realm
-      
-      # Stock Service
       STOCK_SERVICE_URL: http://backend-stock:3000
     depends_on:
       keycloak:
@@ -151,7 +137,7 @@ services:
     container_name: api-gateway
     restart: always
     ports:
-      - "80:80"
+      - "3088:80"
       - "443:443"
     depends_on:
       - backend-compras
