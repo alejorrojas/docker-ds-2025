@@ -76,14 +76,14 @@ Este comando retorna un JSON con el `access_token` que necesitarás para las sig
 Reemplaza `{token}` con el `access_token` obtenido del paso anterior:
 
 ```bash
-curl --location 'http://localhost:3099/api/productos' \
+curl --location 'http://localhost:3088/api/productos' \
 --header 'Authorization: Bearer {token}'
 ```
 
 #### Obtener Envíos de Logística (requiere token)
 
 ```bash
-curl --location 'http://localhost:3010/shipping' \
+curl --location 'http://localhost:3088/shipping' \
 --header 'Authorization: Bearer {token}'
 ```
 
@@ -92,7 +92,7 @@ curl --location 'http://localhost:3010/shipping' \
 Este endpoint es público y no requiere autenticación:
 
 ```bash
-curl --location 'http://localhost:3010/shipping/transport-methods'
+curl --location 'http://localhost:3088/shipping/transport-methods'
 ```
 
 > **Nota**: Aunque el endpoint es público, puedes incluir el header de Authorization si lo deseas, pero no es necesario.

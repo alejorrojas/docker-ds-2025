@@ -52,27 +52,46 @@ services:
   # ============================================
   # Logística: Backend con base de datos integrada
   # ============================================
-  back-logistica:
-    image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:latest
-    container_name: back-logistica
+  mysql-logistica:
+    image: mysql:8.0
+    container_name: shipping_mysql
     restart: always
-    environment:     
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
-      KEYCLOAK_REALM: ds-2025-realm
-      STOCK_SERVICE_URL: http://backend-stock:3000
-    depends_on:
-      keycloak:
-        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: shipping_db
+      MYSQL_USER: shipping_user
+      MYSQL_PASSWORD: shipping_pass
     ports:
-      - "3010:3000"
+      - "3306:3306"
     volumes:
       - mysql_logistica_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "shipping_user", "-pshipping_pass"]
-      interval: 10s
+      interval: 3s
       timeout: 5s
-      retries: 10
-      start_period: 40s
+      retries: 20
+      start_period: 10s
+
+  back-logistica:
+    image: ghcr.io/frre-ds/2025-grupo-03-backend-logistica:4ac1da58f0688ad35a08147a7ece7becc72a4bf5
+    container_name: shipping_back
+    restart: always
+    environment:
+      DB_HOST: mysql-logistica
+      DB_PORT: 3306
+      DB_USERNAME: shipping_user
+      DB_PASSWORD: shipping_pass
+      DB_DATABASE: shipping_db
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ds-2025-realm
+      STOCK_SERVICE_URL: http://api-gateway:80
+    depends_on:
+      mysql-logistica:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "3010:3000"
 
   # ============================================
   # Stock: PostgreSQL y Backend
