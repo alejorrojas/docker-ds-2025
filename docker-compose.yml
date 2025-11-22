@@ -20,12 +20,18 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.6
     container_name: keycloak
-    command: start --import-realm
+    command:
+      - start-dev
+      - --import-realm
+      - --http-enabled=true
+      - --hostname=localhost
+      - --hostname-port=8080
+      - --hostname-backchannel-dynamic=true
     environment:
-      KC_HOSTNAME: keycloak
+      KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8080
-      KC_HOSTNAME_STRICT_BACKCHANNEL: false
-      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
