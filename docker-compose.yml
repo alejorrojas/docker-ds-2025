@@ -23,15 +23,9 @@ services:
     command:
       - start-dev
       - --import-realm
-      - --http-enabled=true
-      - --hostname=localhost
-      - --hostname-port=8080
-      - --hostname-backchannel-dynamic=true
     environment:
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8080
-      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
@@ -88,7 +82,7 @@ services:
       DB_USERNAME: shipping_user
       DB_PASSWORD: shipping_pass
       DB_DATABASE: shipping_db
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_AUTH_SERVER_URL: http://localhost:8080
       KEYCLOAK_REALM: ds-2025-realm
       STOCK_SERVICE_URL: http://api-gateway:80
     depends_on:
@@ -98,6 +92,8 @@ services:
         condition: service_healthy
     ports:
       - "3010:3000"
+    extra_hosts:
+      - "localhost:host-gateway"
 
   # ============================================
   # Stock: PostgreSQL y Backend
@@ -135,7 +131,7 @@ services:
       KEYCLOAK_DB: keycloak_db
       KEYCLOAK_DB_USER: keycloak_db_user
       KEYCLOAK_DB_PASS: keycloak_db_user_password
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/ds-2025-realm
+      KEYCLOAK_ISSUER: http://localhost:8080/realms/ds-2025-realm
       KEYCLOAK_CLIENT_SECRET: ef7f0900-8de5-46c0-b813-ce76d61e0158
       KEYCLOAK_REALM: ds-2025-realm
     ports:
@@ -145,6 +141,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+    extra_hosts:
+      - "localhost:host-gateway"
 
   backend-compras:
     image: ghcr.io/frre-ds/backend-compras-g01:7ac7a4efec1f0551fbb8267e391989126ff6b82d
