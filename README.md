@@ -1,6 +1,10 @@
 # Stack Unificado - Keycloak, Stock, Logística y Compras
 
-Este proyecto contiene un stack completo de microservicios unificado en un solo `docker-compose.yml`, incluyendo Keycloak para autenticación, y los backends de Stock, Logística y Compras.
+Este proyecto contiene un stack completo de microservicios distribuido en múltiples archivos `docker-compose.yml`:
+- **Keycloak** (autenticación) en `keycloak/docker-compose.yml`
+- **Stock, Logística y Compras** en el `docker-compose.yml` principal
+
+Todos los servicios se comunican a través de una red Docker compartida.
 
 ## 📋 Tabla de Contenidos
 
@@ -60,10 +64,71 @@ El stack está compuesto por los siguientes servicios:
 
 ## 🚀 Uso
 
-### Levantar todos los servicios
+### Configuración Inicial
+
+**Paso 1: Crear la red compartida**
+
+Primero, crea la red Docker compartida que permitirá la comunicación entre los servicios:
+
+```bash
+docker network create shared_net
+```
+
+**Paso 2: Levantar Keycloak**
+
+```bash
+cd keycloak
+docker compose up -d
+cd ..
+```
+
+**Paso 3: Levantar el resto de los servicios**
 
 ```bash
 docker compose up -d
+```
+
+### Levantar todos los servicios (orden completo)
+
+**Opción 1: Usar el script helper (recomendado)**
+
+```bash
+./start.sh
+```
+
+**Opción 2: Manualmente**
+
+```bash
+# Crear red compartida (solo la primera vez)
+docker network create shared_net
+
+# Levantar Keycloak (con nombre de proyecto explícito para que aparezca separado)
+cd keycloak && docker compose -p keycloak up -d && cd ..
+
+# Levantar servicios principales (con nombre de proyecto explícito)
+docker compose -p test-stock up -d
+```
+
+**Nota**: Usamos `-p` (project-name) para que los contenedores aparezcan como proyectos separados en Docker Desktop:
+- `keycloak` → aparecerá como proyecto "keycloak"
+- `test-stock` → aparecerá como proyecto "test-stock"
+
+### Detener todos los servicios
+
+**Opción 1: Usar el script helper**
+
+```bash
+./stop.sh
+```
+
+**Opción 2: Manualmente**
+
+```bash
+# Detener servicios principales
+docker compose -p test-stock down
+
+# Detener Keycloak
+cd keycloak && docker compose -p keycloak down && cd ..
 ```
 
 ## Pruebas con CURL
@@ -210,9 +275,15 @@ curl --location 'http://localhost:3088/shipping/transport-methods'
 
 ## 🔗 Comunicación entre Servicios
 
-### Red Docker Compose
+### Red Docker Compose Compartida
 
-**No es necesario crear una red compartida manualmente**. Docker Compose crea automáticamente una red por defecto para todos los servicios en el mismo `docker-compose.yml`.
+**IMPORTANTE**: Como Keycloak está en un `docker-compose.yml` separado, es necesario crear una red externa compartida antes de levantar los servicios:
+
+```bash
+docker network create shared_net
+```
+
+Esta red permite que todos los contenedores (Keycloak, Stock, Logística, Compras, API Gateway) se comuniquen entre sí usando los nombres de servicio como hostnames.
 
 ### Regla de Oro: Usar nombres de servicio, NO localhost
 
@@ -310,7 +381,12 @@ docker exec backend-stock ping -c 2 keycloak
 ### Ver logs de Keycloak
 
 ```bash
-docker compose logs keycloak | grep -i "import\|realm\|error"
+# Desde el directorio keycloak
+cd keycloak
+docker compose -p keycloak logs keycloak | grep -i "import\|realm\|error"
+
+# O desde el directorio raíz
+docker compose -p keycloak -f keycloak/docker-compose.yml logs keycloak | grep -i "import\|realm\|error"
 ```
 
 ### Verificar que el realm se importó correctamente
@@ -322,14 +398,35 @@ curl http://localhost:8080/realms/ds-2025-realm/.well-known/openid-configuration
 ### Reiniciar un servicio específico
 
 ```bash
-docker compose restart keycloak
-docker compose restart backend-stock
+# Reiniciar Keycloak (desde el directorio keycloak)
+cd keycloak
+docker compose -p keycloak restart keycloak
+
+# Reiniciar servicios del compose principal
+docker compose -p test-stock restart backend-stock
+docker compose -p test-stock restart back-logistica
+```
+
+### Detener todos los servicios
+
+```bash
+# Detener servicios principales
+docker compose down
+
+# Detener Keycloak
+cd keycloak
+docker compose down
+cd ..
 ```
 
 ### Ver estado de health checks
 
 ```bash
-docker compose ps
+# Ver servicios principales
+docker compose -p test-stock ps
+
+# Ver servicios de Keycloak
+cd keycloak && docker compose -p keycloak ps && cd ..
 ```
 
 ### Problema: "Realm does not exist"
@@ -347,14 +444,13 @@ Asegúrate de que el archivo `.env` en la raíz contiene todas las variables nec
 
 ```
 test-stock/
-├── docker-compose.yml          # Stack unificado
+├── docker-compose.yml          # Stack principal (Stock, Logística, Compras, API Gateway)
 ├── .env                        # Variables de entorno
 ├── api-gateway/
 │   ├── Dockerfile              # Imagen del API Gateway
 │   └── nginx.conf              # Configuración de Nginx
 ├── keycloak/
-│   ├── .env                    # Variables de Keycloak (fuente)
-│   ├── docker-compose.yml      # (legacy, no usar)
+│   ├── docker-compose.yml      # Stack de Keycloak y PostgreSQL
 │   └── realm-config/
 │       └── ds-2025-realm.json  # Configuración del realm
 ├── stock/

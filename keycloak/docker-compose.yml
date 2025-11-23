@@ -1,18 +1,27 @@
 services:
-  postgres:
+  # ============================================
+  # Keycloak y su base de datos
+  # ============================================
+  postgres-keycloak:
     image: postgres:16.2
+    container_name: postgres_keycloak
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_keycloak_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - shared_net
 
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.6
-    #command: start
+    container_name: keycloak
     command: start --import-realm
     environment:
       KC_HOSTNAME: keycloak
@@ -24,23 +33,30 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres/${POSTGRES_DB}
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak/${POSTGRES_DB}
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - 8080:8080
+      - "8080:8080"
     volumes:
       - ./realm-config:/opt/keycloak/data/import
     restart: always
     depends_on:
-      - postgres
+      postgres-keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       shared_net:
         aliases:
           - keycloak
 
 volumes:
-  postgres_data:
+  postgres_keycloak_data:
     driver: local
 
 networks:
