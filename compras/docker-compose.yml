@@ -1,0 +1,13 @@
+services:
+  backend-compras:
+    image: ghcr.io/frre-ds/backend-compras-g01:7ac7a4efec1f0551fbb8267e391989126ff6b82d
+    container_name: backend-compras
+    networks:
+      - ds2025-network
+    ports:
+      - "3081:8081"
+    restart: always
+
+networks:
+  ds2025-network:
+    external: true
