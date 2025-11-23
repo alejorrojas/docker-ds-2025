@@ -65,6 +65,13 @@ services:
       dockerfile: Dockerfile
     container_name: api-gateway
     restart: always
+    environment:
+      STOCK_SERVICE_HOST: backend-stock
+      STOCK_SERVICE_PORT: 3000
+      COMPRAS_SERVICE_HOST: backend-compras
+      COMPRAS_SERVICE_PORT: 8081
+      LOGISTICA_SERVICE_HOST: backend-logistica
+      LOGISTICA_SERVICE_PORT: 8080
     ports:
       - "3088:80"
       - "443:443"
@@ -72,7 +79,7 @@ services:
       - backend-compras
       - backend-stock
     volumes:
-      - ../api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../api-gateway/nginx.conf:/etc/nginx/nginx.conf.template:ro
     networks:
       - shared_net
 

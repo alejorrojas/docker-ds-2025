@@ -1,0 +1,18 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    networks:
+      - ds2025-network
+    restart: always
+    ports:
+      - "3088:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+networks:
+  ds2025-network:
+    external: true
