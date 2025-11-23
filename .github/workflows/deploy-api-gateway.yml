@@ -3,7 +3,7 @@ name: Build and Publish API Gateway Docker Image
 on:
   push:
     branches:
-      - main
+      - alejo/api-gateway-prod
     paths:
       - 'api-gateway/**'
       - '.github/workflows/api-gateway-docker-package-deploy.yml'
@@ -51,4 +51,3 @@ jobs:
           echo "✅ Image published successfully!"
           echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
           echo "🏷️  Tag: ${{ github.sha }}"
-
